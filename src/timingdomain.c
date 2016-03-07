@@ -209,7 +209,9 @@ prepareLeapFlags(RunTimeOpts *rtOpts, PtpClock *ptpClock) {
 	TimeInternal now;
 	Boolean leapInsert = FALSE, leapDelete = FALSE;
 #ifdef HAVE_SYS_TIMEX_H
+#ifndef FSL_1588
 	int flags;
+#endif /* FSL_1588 */
 
 	/* first get the offset from kernel if we can */
 #if defined(MOD_TAI) &&  NTP_API == 4
@@ -220,11 +222,13 @@ prepareLeapFlags(RunTimeOpts *rtOpts, PtpClock *ptpClock) {
 	}
 #endif /* MOD_TAI */
 
+#ifndef FSL_1588
 	flags= getTimexFlags();
 
 	leapInsert = ((flags & STA_INS) == STA_INS);
 	leapDelete = ((flags & STA_DEL) == STA_DEL);
 
+#endif /* FSL_1588 */
 #endif 	/* HAVE_SYS_TIMEX_H  */
 
 	getTime(&now);
@@ -400,11 +404,13 @@ ptpServiceClockUpdate (TimingService* service)
 	TimeInternal newTime, oldTime;
 
 #ifdef HAVE_SYS_TIMEX_H
+#ifndef FSL_1588
 	int flags = getTimexFlags();
 
 	Boolean leapInsert = flags & STA_INS;
 	Boolean leapDelete = flags & STA_DEL;
 	Boolean inSync = !(flags & STA_UNSYNC);
+#endif /* FSL_1588 */
 #endif /* HAVE_SYS_TIMEX_H */
 
 	ClockStatusInfo *clockStatus = &ptpClock->clockStatus;
@@ -424,6 +430,7 @@ ptpServiceClockUpdate (TimingService* service)
 #endif
 
 #ifdef HAVE_SYS_TIMEX_H
+#ifndef FSL_1588
 
 	if(clockStatus->inSync & !inSync) {
 	    clockStatus->inSync = FALSE;
@@ -462,6 +469,7 @@ ptpServiceClockUpdate (TimingService* service)
 		unsetTimexFlags(STA_DEL, TRUE);
 	}
     }
+#endif /* FSL_1588 */
 #else
 	if(clockStatus->leapInsert || clockStatus->leapDelete) {
 		if(rtOpts->leapSecondHandling != LEAP_SMEAR) {

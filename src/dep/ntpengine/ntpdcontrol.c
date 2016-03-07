@@ -195,7 +195,11 @@ get_systime(
          * Convert Unix clock from seconds and nanoseconds to seconds.
          */
 # ifdef HAVE_CLOCK_GETTIME
+#ifdef FSL_1588
+	clock_gettime(clkid, &ts);
+#else
         clock_gettime(CLOCK_REALTIME, &ts);
+#endif
 # else
         getclock(TIMEOFDAY, &ts);
 # endif

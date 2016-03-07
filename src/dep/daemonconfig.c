@@ -815,6 +815,9 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 	rtOpts->clockQuality.offsetScaledLogVariance = DEFAULT_CLOCK_VARIANCE;
 	rtOpts->priority1 = DEFAULT_PRIORITY1;
 	rtOpts->priority2 = DEFAULT_PRIORITY2;
+#ifdef FSL_1588
+	strcpy(rtOpts->ptpDevice, "/dev/ptp0");
+#endif
 	rtOpts->domainNumber = DEFAULT_DOMAIN_NUMBER;
 	rtOpts->portNumber = NUMBER_PORTS;
 
@@ -1216,6 +1219,11 @@ parseConfig ( dictionary* dict, RunTimeOpts *rtOpts )
 	"	 slave will keep alternating between primary and secondary until a GM is found.\n");
 
 	CONFIG_KEY_TRIGGER("ptpengine:backup_interface",rtOpts->backupIfaceEnabled,TRUE,FALSE);
+
+#ifdef FSL_1588
+	CONFIG_MAP_CHARARRAY("ptpengine:ptp_device",rtOpts->ptpDevice,rtOpts->ptpDevice,
+	"PTP device to use - /dev/ptp0, /dev/ptp1 etc.");
+#endif
 
 	/* Preset option names have to be mapped to defined presets - no free strings here */
 	CONFIG_MAP_SELECTVALUE("ptpengine:preset",rtOpts->selectedPreset,rtOpts->selectedPreset,
@@ -2543,6 +2551,19 @@ parseConfig ( dictionary* dict, RunTimeOpts *rtOpts )
 	if(!IS_QUIET()) {
 
 		findUnknownSettings(dict, target);
+#ifdef FSL_1588
+		int fd;
+		fd = open(rtOpts->ptpDevice, O_RDWR);
+		if (fd < 0) {
+			fprintf(stderr, "opening %s: %s\n", rtOpts->ptpDevice, strerror(errno));
+			return NULL;
+		}
+		clkid = get_clockid(fd);
+		if (clkid == -1) {
+			fprintf(stderr, "failed to read clock id\n");
+			return NULL;
+		}
+#endif
 
 		if (parseResult)
 			INFO("Configuration OK\n");
@@ -2773,6 +2794,9 @@ Boolean loadCommandLineOptions(RunTimeOpts* rtOpts, dictionary* dict, int argc, 
 	    {"config-file",	required_argument, 0, 'c'},
 	    {"check-config",	optional_argument, 0, 'k'},
 	    {"interface",	required_argument, 0, 'i'},
+#ifdef FSL_1588
+	    {"ptp_device",	optional_argument, 0, 'o'},
+#endif
 	    {"domain",		required_argument, 0, 'd'},
 	    {"slaveonly",	no_argument,	   0, 's'},
 	    {"masterslave",	no_argument,	   0, 'm'},
@@ -2803,8 +2827,11 @@ Boolean loadCommandLineOptions(RunTimeOpts* rtOpts, dictionary* dict, int argc, 
 	    {"unicast-destinations",		required_argument, 0, 'u'},
 	    {0,			0		 , 0, 0}
 	};
-
+#ifdef FSL_1588
+	while ((c = getopt_long(argc, argv, "?c:kb:i:o:d:sgmGMWyUu:nf:S:r:DvCVHhe:Y:tOLEPAaR:l:p", long_options, &opt_index)) != -1) {
+#else
 	while ((c = getopt_long(argc, argv, "?c:kb:i:d:sgmGMWyUu:nf:S:r:DvCVHhe:Y:tOLEPAaR:l:p", long_options, &opt_index)) != -1) {
+#endif
 	    switch(c) {
 /* non-config options first */
 
@@ -2851,6 +2878,11 @@ short_help:
 			} else
 				dictionary_set(dict,"ptpengine:interface", optarg);
 			break;
+#ifdef FSL_1588
+		case 'o':
+			dictionary_set(dict,"ptpengine:ptp_device", optarg);
+			break;
+#endif
 		/* domain */
 		case 'd':
 			dictionary_set(dict,"ptpengine:domain", optarg);
@@ -3043,6 +3075,9 @@ printShortHelp()
 			"------------------------------------------------------------------------------------\n"
 
 			"-i --interface [dev]		ptpengine:interface=<dev>	Interface to use (required)\n"
+#ifdef FSL_1588
+			"-o --open ptp device [dev]	ptpengine:ptp_device=<dev>	PTP device to use\n"
+#endif
 			"-d --domain [n] 		ptpengine:domain=<n>		PTP domain number\n"
 			"-s --slaveonly	 	 	ptpengine:preset=slaveonly	Slave only mode\n"
 			"-m --masterslave 		ptpengine:preset=masterslave	Master, slave when not best GM\n"

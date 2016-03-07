@@ -339,6 +339,9 @@ UInteger16 msgPackManagementResponse(Octet * buf,MsgHeader*,MsgManagement*,PtpCl
  * -Init network stuff, send and receive datas*/
  /**\{*/
 
+#ifdef FSL_1588
+void hwtstamp_tx_ctl(NetPath *netPath, Boolean enable);
+#endif
 Boolean testInterface(char* ifaceName, const RunTimeOpts* rtOpts);
 Boolean netInit(NetPath*,RunTimeOpts*,PtpClock*);
 Boolean netShutdown(NetPath*);
@@ -422,6 +425,10 @@ void periodicUpdate(const RunTimeOpts *rtOpts, PtpClock *ptpClock);
 void displayStatus(PtpClock *ptpClock, const char *prefixMessage);
 void displayPortIdentity(PortIdentity *port, const char *prefixMessage);
 int snprint_PortIdentity(char *s, int max_len, const PortIdentity *id);
+#ifdef FSL_1588
+clockid_t get_clockid(int fd);
+int clock_adjtime(clockid_t id, struct timex *tx);
+#endif
 Boolean nanoSleep(TimeInternal*);
 void getTime(TimeInternal*);
 void getTimeMonotonic(TimeInternal*);
@@ -446,6 +453,7 @@ void adjTime(Integer32);
 void adjFreq_wrapper(const RunTimeOpts * rtOpts, PtpClock * ptpClock, double adj);
 Boolean adjFreq(double);
 double getAdjFreq(void);
+#ifndef FSL_1588
 void informClockSource(PtpClock* ptpClock);
 
 
@@ -454,6 +462,7 @@ void setTimexFlags(int flags, Boolean quiet);
 void unsetTimexFlags(int flags, Boolean quiet);
 int getTimexFlags(void);
 Boolean checkTimexFlags(int flags);
+#endif /* FSL_1588 */
 
 #if defined(MOD_TAI) &&  NTP_API == 4
 void setKernelUtcOffset(int utc_offset);

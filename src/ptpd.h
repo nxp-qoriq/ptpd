@@ -22,6 +22,28 @@
 # include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#define FSL_1588 1
+
+#ifdef FSL_1588
+#ifndef HAVE_SYS_TIMEX_H
+#define HAVE_SYS_TIMEX_H 1
+#endif
+#ifdef MOD_TAI
+#undef MOD_TAI
+#endif
+#ifndef _POSIX_TIMERS
+#define _POSIX_TIMERS 1
+#endif
+#ifndef HAVE_CLOCK_GETTIME
+#define HAVE_CLOCK_GETTIME 1
+#endif
+#ifdef CLOCK_MONOTINIC
+#undef CLOCK_MONOTINIC
+#endif
+#ifndef SO_TIMESTAMPING
+#define SO_TIMESTAMPING 37
+#endif
+#endif /* FSL_1588 */
 
 #ifdef linux
 #	ifndef _GNU_SOURCE
@@ -193,6 +215,9 @@
 #include <linux/rtc.h>
 #endif /* HAVE_LINUX_RTC_H */
 
+#ifdef FSL_1588
+clockid_t clkid;
+#endif
 /** \name arith.c
  * -Timing management and arithmetic*/
  /**\{*/

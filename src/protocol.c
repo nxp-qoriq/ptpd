@@ -1343,6 +1343,9 @@ handle(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
     TimeInternal timeStamp = { 0, 0 };
     fd_set readfds;
 
+#ifdef FSL_1588
+	hwtstamp_tx_ctl(&ptpClock->netPath, FALSE); /* HWTSTAMP_TX_OFF */
+#endif
     FD_ZERO(&readfds);
     if (!ptpClock->message_activity) {
 	ret = netSelect(NULL, &ptpClock->netPath, &readfds);

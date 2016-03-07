@@ -1014,6 +1014,9 @@ typedef struct {
 	Octet primaryIfaceName[IFACE_NAME_LENGTH];
 	Octet backupIfaceName[IFACE_NAME_LENGTH];
 	Boolean backupIfaceEnabled;
+#ifdef FSL_1588
+	Octet ptpDevice[50];
+#endif
 
 	Boolean	noResetClock; // don't step the clock if offset > 1s
 	Boolean stepForce; // force clock step on first sync after startup
